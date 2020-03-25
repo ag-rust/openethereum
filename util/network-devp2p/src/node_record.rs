@@ -71,10 +71,14 @@ impl EnrManager {
 }
 
 impl DiskEntity for Enr {
-	const PATH: &'static str = "enr";
-	const DESC: &'static str = "Ethereum Node Record";
+	const FILENAME: &'static str = "enr";
+	const DESCRIPTION: &'static str = "Ethereum Node Record";
 
 	fn to_repr(&self) -> String {
 		self.to_base64()
+	}
+
+	fn from_repr(s: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+		Ok(s.parse()?)
 	}
 }

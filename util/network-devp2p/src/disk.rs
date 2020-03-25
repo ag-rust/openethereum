@@ -17,40 +17,48 @@
 use log::*;
 use parity_crypto::publickey::Secret;
 use parity_path::restrict_permissions_owner;
-use std::fmt::Debug;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 
-pub trait DiskEntity: FromStr {
-	const PATH: &'static str;
-	const DESC: &'static str;
+/// An entity that can be persisted on disk.
+pub trait DiskEntity: Sized {
+	const FILENAME: &'static str;
+	/// Description of what kind of data that is stored in the file
+	const DESCRIPTION: &'static str;
 
+	/// Convert to UTF-8 representation that will be written to disk.
 	fn to_repr(&self) -> String;
+
+	/// Convert from UTF-8 representation loaded from disk.
+	fn from_repr(s: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 impl DiskEntity for Secret {
-	const PATH: &'static str = "key";
-	const DESC: &'static str = "key file";
+	const FILENAME: &'static str = "key";
+	const DESCRIPTION: &'static str = "key file";
 
 	fn to_repr(&self) -> String {
 		self.to_hex()
+	}
+
+	fn from_repr(s: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+		Ok(s.parse()?)
 	}
 }
 
 pub fn save<E: DiskEntity>(path: &Path, entity: &E) {
 	let mut path_buf = PathBuf::from(path);
 	if let Err(e) = fs::create_dir_all(path_buf.as_path()) {
-		warn!("Error creating {} directory: {:?}", E::DESC, e);
+		warn!("Error creating {} directory: {:?}", E::DESCRIPTION, e);
 		return;
 	};
-	path_buf.push(E::PATH);
+	path_buf.push(E::FILENAME);
 	let path = path_buf.as_path();
 	let mut file = match fs::File::create(&path) {
 		Ok(file) => file,
 		Err(e) => {
-			warn!("Error creating {}: {:?}", E::DESC, e);
+			warn!("Error creating {}: {:?}", E::DESCRIPTION, e);
 			return;
 		}
 	};
@@ -58,21 +66,20 @@ pub fn save<E: DiskEntity>(path: &Path, entity: &E) {
 		warn!(target: "network", "Failed to modify permissions of the file ({})", e);
 	}
 	if let Err(e) = file.write(&entity.to_repr().into_bytes()) {
-		warn!("Error writing {}: {:?}", E::DESC, e);
+		warn!("Error writing {}: {:?}", E::DESCRIPTION, e);
 	}
 }
 
 pub fn load<E>(path: &Path) -> Option<E>
 where
 	E: DiskEntity,
-	<E as FromStr>::Err: Debug,
 {
 	let mut path_buf = PathBuf::from(path);
-	path_buf.push(E::PATH);
+	path_buf.push(E::FILENAME);
 	let mut file = match fs::File::open(path_buf.as_path()) {
 		Ok(file) => file,
 		Err(e) => {
-			debug!("Error opening {}: {:?}", E::DESC, e);
+			debug!("Error opening {}: {:?}", E::DESCRIPTION, e);
 			return None;
 		}
 	};
@@ -80,14 +87,14 @@ where
 	match file.read_to_string(&mut buf) {
 		Ok(_) => {},
 		Err(e) => {
-			warn!("Error reading {}: {:?}", E::DESC, e);
+			warn!("Error reading {}: {:?}", E::DESCRIPTION, e);
 			return None;
 		}
 	}
-	match E::from_str(&buf) {
+	match E::from_repr(&buf) {
 		Ok(key) => Some(key),
 		Err(e) => {
-			warn!("Error parsing {}: {:?}", E::DESC, e);
+			warn!("Error parsing {}: {:?}", E::DESCRIPTION, e);
 			None
 		}
 	}
