@@ -47,10 +47,10 @@ use network::{
 use crate::{
 	connection::PAYLOAD_SOFT_LIMIT,
 	discovery::{Discovery, MAX_DATAGRAM_SIZE, NodeEntry, TableUpdates},
-	disk::{save, load},
 	ip_utils::{map_external_address, select_public_address},
 	node_record::*,
 	node_table::*,
+	persistence::{save, load},
 	PROTOCOL_VERSION,
 	session::{Session, SessionData}
 };

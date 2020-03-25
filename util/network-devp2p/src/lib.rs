@@ -65,7 +65,6 @@ pub use host::NetworkContext;
 pub use node_table::{MAX_NODES_IN_TABLE, NodeId, validate_node_url};
 pub use service::NetworkService;
 
-mod disk;
 mod host;
 mod connection;
 mod handshake;
@@ -75,5 +74,6 @@ mod service;
 mod node_record;
 mod node_table;
 mod ip_utils;
+mod persistence;
 
 const PROTOCOL_VERSION: u32 = 5;

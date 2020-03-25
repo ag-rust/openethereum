@@ -16,7 +16,7 @@
 
 use log::*;
 use parity_crypto::publickey::Secret;
-use crate::{disk::DiskEntity, node_table::NodeEndpoint};
+use crate::{persistence::DiskEntity, node_table::NodeEndpoint};
 
 pub type Enr = enr::Enr<secp256k1::SecretKey>;
 
