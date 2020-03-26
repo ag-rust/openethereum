@@ -310,7 +310,7 @@ impl Host {
 				}
 			}
 		}
-		let enr = enr.unwrap_or_else(|| EnrManager::new(keys.secret().clone(), 0).expect("Key is always valid; qed"));
+		let enr = enr.unwrap_or_else(|| EnrManager::new(keys.secret().clone(), 0).expect("keys.secret() is a valid secp256k1 secret; Enr does not fail given valid secp256k1 secret; qed"));
 		let path = config.net_config_path.clone();
 		// Setup the server socket
 		let tcp_listener = TcpListener::bind(&listen_address)?;
